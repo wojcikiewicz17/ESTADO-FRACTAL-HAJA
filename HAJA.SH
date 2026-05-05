@@ -1,108 +1,128 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-readonly ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-readonly SEED_FILE="SEMENTE_SUPRALEGAL.md"
-readonly HASH_FILE="SEMENTE_SUPRALEGAL.sha256"
-readonly GENERATED_AT="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
-readonly REQUIRED_DOCS=(README.md Manifest.md preambulo.md Md.md Mp0001.md License.md)
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SEED_FILE="SEMENTE_SUPRALEGAL.md"
+SEED_HASH_FILE="SEMENTE_SUPRALEGAL.sha256"
+HASHES_FILE="HASHES.md"
+JSON_OUTPUT=0
 
-log() { printf '%s\n' "$*"; }
+REQUIRED_DOCS=(
+  README.md Manifest.md preambulo.md Md.md Mp0001.md License.md
+  LEGAL_BASIS.md SUMULAS_E_JURISPRUDENCIA.md COPYRIGHT.md NOTICE.md
+  AUTHORS.md GOVERNANCE.md CHILD_DATA_PROTECTION.md LIMITS_AND_DISCLAIMER.md CONTRIBUTING.md
+)
 
-validate_docs() {
+ACTIONS=()
+
+log(){ printf '%s\n' "$*"; }
+err(){ printf '[ERRO] %s\n' "$*" >&2; }
+
+usage(){
+  cat <<USAGE
+Uso: ./HAJA.SH [--check] [--generate] [--hash] [--verify] [--json]
+  --check     valida documentos obrigatórios
+  --generate  regenera ${SEED_FILE}
+  --hash      atualiza ${SEED_HASH_FILE} e ${HASHES_FILE}
+  --verify    verifica hashes esperados
+  --json      saída em JSON simples
+USAGE
+}
+
+validate_docs(){
   local missing=0
   for file in "${REQUIRED_DOCS[@]}"; do
     if [[ -f "$file" ]]; then
       log "[OK] Documento localizado: $file"
     else
-      log "[ERRO] Documento obrigatório ausente: $file"
+      err "Documento obrigatório ausente: $file"
       missing=1
     fi
   done
-  [[ $missing -eq 0 ]] || { log "Falha de integridade documental: interrompido."; exit 1; }
+  [[ $missing -eq 0 ]]
 }
 
-generate_seed() {
-  cat > "$SEED_FILE" <<'SEED'
+generate_seed(){
+  local generated_at
+  generated_at="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+  cat > "$SEED_FILE" <<SEED
 # Carta-Semente Supra Legal do Orquestrador Jurídico HAJA
 
-**Data de emissão (UTC):** __GENERATED_AT__  
-**Natureza:** Estrutura fundacional de direitos pétreos, devido processo e governança técnico-jurídica verificável.
+**Data de emissão (UTC):** ${generated_at}
 
-## I. Cláusulas Essenciais Irrevogáveis
-1. **Dignidade da pessoa humana** como norma matriz de interpretação e limite material de qualquer sistema.
-2. **Proteção integral da criança e do adolescente** como prioridade absoluta e inderrogável.
-3. **Liberdade de consciência, expressão e devido processo** como núcleo mínimo civilizatório.
-4. **Legalidade, publicidade, auditabilidade e rastreabilidade** de atos digitais com prova criptográfica.
-5. **Proporcionalidade e não discriminação algorítmica**, com dever de revisão humana em decisões sensíveis.
+## Cláusulas-base
+1. Dignidade humana.
+2. Proteção integral de crianças e adolescentes.
+3. Devido processo, contraditório e ampla defesa.
+4. Legalidade, publicidade e auditabilidade.
+5. Rastreabilidade técnica por hash e logs UTC.
 
-## II. Arquitetura Normativa por Analogia Constitucional
-- **Brasil (Art. 5º, CF/1988):** garantias de liberdade, privacidade, contraditório e ampla defesa.
-- **EUA (1ª Emenda):** tutela da expressão e da circulação de ideias.
-- **EUA (5ª Emenda):** due process of law e proteção contra arbitrariedades estatais.
-- **Cláusulas pétreas (teoria material):** núcleo essencial não pode ser reduzido por reforma ordinária.
-
-## III. Eixos Internacionais e Regulatórios
-- **ONU / Declaração Universal de Direitos Humanos** (dignidade, igualdade, liberdade).
-- **UNICEF / UNESCO** (proteção de infância, educação, cultura e pluralidade linguística).
-- **LGPD + princípios globais de proteção de dados** (finalidade, necessidade, transparência, segurança).
-- **NIST / ISO / IEC / IEEE / RFC** como blocos técnicos de segurança, interoperabilidade e governança.
-
-## IV. Doutrina de Integridade Probatória (cadeia de custódia)
-- Documento público versionado.
-- Hash SHA-256 para integridade.
-- Registro temporal UTC.
-- Critério de reprodutibilidade por execução local.
-
-## V. Matriz Heurística de 9 Profundidades (rito de validação)
-1. **Fundamento humano** (dignidade/vida).
-2. **Fundamento constitucional** (garantias materiais).
-3. **Fundamento convencional** (tratados internacionais).
-4. **Fundamento probatório** (hash, logs, trilha de auditoria).
-5. **Fundamento processual** (devido processo e contraditório).
-6. **Fundamento tecnológico** (segurança e padrões técnicos).
-7. **Fundamento de proporcionalidade** (balanço de direitos).
-8. **Fundamento comparado** (casos exemplares globais).
-9. **Fundamento de revisão contínua** (governança e accountability).
-
-## VI. Geometria Institucional (hexagonal de possibilidades)
-A governança é organizada em seis vértices acoplados:  
-**Direitos Fundamentais ↔ Prova Técnica ↔ Processo ↔ Transparência ↔ Interoperabilidade ↔ Controle Social.**
-
-## VII. Camada Matemática-Conceitual de Coerência
-- \(\mathbb{T}^7=(\mathbb{R}/\mathbb{Z})^7\), \(\mathbf{s}=(u,v,\psi,\chi,\rho,\delta,\sigma)\in[0,1)^7\).
-- \(\mathbf{s}=\mathrm{ToroidalMap}(x)\), com \(x=(\text{dados},\text{entropia},\text{hash},\text{estado})\).
-- \(C_{t+1}=(1-\alpha)C_t+\alpha C_{in}\), \(H_{t+1}=(1-\alpha)H_t+\alpha H_{in}\), \(\alpha=0.25\).
-- Integridade por hash/CRC/Merkle; convergência ética sob pluralidade linguística e semântica.
-
-## VIII. Regra de Resposta a Objeções
-Qualquer objeção normativa deve indicar:  
-(a) qual cláusula essencial supostamente viola;  
-(b) qual garantia constitucional internacional prevalece;  
-(c) qual evidência técnica reproduzível sustenta a objeção.  
-Sem os três elementos, a objeção é processualmente incompleta.
-
-## IX. Execução
-Executar `./HAJA.SH` para:
-1. validar documentação base;
-2. regenerar esta Carta-Semente;
-3. atualizar hash de integridade.
+## Nota de escopo
+Documento declaratório, técnico e acadêmico. Não implica reconhecimento estatal automático nem soberania jurídica real.
 SEED
-
-  sed -i "s/__GENERATED_AT__/${GENERATED_AT}/g" "$SEED_FILE"
+  log "[OK] Arquivo regenerado: $SEED_FILE"
 }
 
-generate_hash() {
-  sha256sum "$SEED_FILE" | tee "$HASH_FILE" >/dev/null
+generate_hashes(){
+  sha256sum "$SEED_FILE" > "$SEED_HASH_FILE"
+  {
+    echo "# HASHES"
+    echo
+    echo "Gerado em UTC: $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+    echo
+    for f in README.md Manifest.md preambulo.md Md.md Mp0001.md License.md \
+      LEGAL_BASIS.md SUMULAS_E_JURISPRUDENCIA.md COPYRIGHT.md NOTICE.md AUTHORS.md \
+      GOVERNANCE.md CHILD_DATA_PROTECTION.md LIMITS_AND_DISCLAIMER.md CONTRIBUTING.md \
+      "$SEED_FILE"; do
+      [[ -f "$f" ]] && sha256sum "$f"
+    done
+  } > "$HASHES_FILE"
+  log "[OK] Hashes atualizados: $SEED_HASH_FILE e $HASHES_FILE"
 }
 
-main() {
+verify_hashes(){
+  [[ -f "$SEED_HASH_FILE" ]] || { err "Arquivo ausente: $SEED_HASH_FILE"; return 1; }
+  sha256sum -c "$SEED_HASH_FILE"
+  log "[OK] Verificação concluída com sucesso"
+}
+
+emit_json(){
+  printf '{"status":"ok","actions":"%s"}\n' "$(printf '%s,' "${ACTIONS[@]}" | sed 's/,$//')"
+}
+
+parse_args(){
+  if [[ $# -eq 0 ]]; then
+    ACTIONS=(check generate hash)
+    return
+  fi
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --check) ACTIONS+=(check) ;;
+      --generate) ACTIONS+=(generate) ;;
+      --hash) ACTIONS+=(hash) ;;
+      --verify) ACTIONS+=(verify) ;;
+      --json) JSON_OUTPUT=1 ;;
+      -h|--help) usage; exit 0 ;;
+      *) err "Opção inválida: $1"; usage; exit 2 ;;
+    esac
+    shift
+  done
+}
+
+main(){
   cd "$ROOT_DIR"
-  validate_docs
-  generate_seed
-  generate_hash
-  log "Carta-semente gerada: $SEED_FILE"
-  log "Hash de integridade salvo em: $HASH_FILE"
+  parse_args "$@"
+  local failed=0
+  for action in "${ACTIONS[@]}"; do
+    case "$action" in
+      check) validate_docs || failed=1 ;;
+      generate) generate_seed ;;
+      hash) generate_hashes ;;
+      verify) verify_hashes || failed=1 ;;
+    esac
+  done
+  if [[ $JSON_OUTPUT -eq 1 ]]; then emit_json; fi
+  [[ $failed -eq 0 ]] || exit 1
 }
 
 main "$@"
