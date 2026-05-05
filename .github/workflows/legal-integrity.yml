@@ -1,0 +1,49 @@
+name: legal-integrity
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Shellcheck (optional)
+        run: |
+          if command -v shellcheck >/dev/null 2>&1; then
+            shellcheck HAJA.SH
+          else
+            echo "[WARN] shellcheck não disponível no runner; etapa não bloqueante"
+          fi
+
+      - name: Check required docs
+        run: ./HAJA.SH --check
+
+      - name: Generate seed and hashes
+        run: |
+          ./HAJA.SH --generate
+          ./HAJA.SH --hash
+
+      - name: Verify hashes
+        run: ./HAJA.SH --verify
+
+      - name: Build legal integrity report
+        run: |
+          {
+            echo "legal-integrity-report"
+            echo "generated_at_utc=$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+            echo "commit=${GITHUB_SHA}"
+          } > legal-integrity-report.txt
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: legal-integrity-artifacts
+          path: |
+            SEMENTE_SUPRALEGAL.md
+            SEMENTE_SUPRALEGAL.sha256
+            HASHES.md
+            legal-integrity-report.txt
